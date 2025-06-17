@@ -1,37 +1,84 @@
+import os
+import json
 import whisper
 import easyocr
+import ffmpeg
+import numpy as np
 
-# === 初始化模型 ===
+# === 加载模型 ===
+print("🎯 正在加载模型...")
 whisper_model = whisper.load_model("base")
 ocr_reader = easyocr.Reader(['ch_sim', 'en'], gpu=False)
+print("✅ 模型加载完毕。")
 
-def transcribe_audio(audio_path: str) -> str:
-    """
-    将音频（WAV 格式）转成中文文字
-    :param audio_path: 音频文件路径
-    :return: 识别出的文字字符串
-    """
+# === 音频处理（不依赖系统 ffmpeg） ===
+def transcribe_audio_stream(audio_path: str, output_path: str):
+    print(f"\n[🔍] 正在读取音频文件：{audio_path}")
+    if not os.path.isfile(audio_path):
+        print("❌ 音频文件不存在。")
+        return
+
     try:
-        print(f"[🎙] 正在识别音频文件：{audio_path}")
-        result = whisper_model.transcribe(audio_path, language='zh')
-        print(f"[✅] 识别结果：{result['text']}")
-        return result["text"]
+        print("🎧 解码音频中（通过 ffmpeg-python）...")
+        process = (
+            ffmpeg
+            .input(audio_path, threads=0)
+            .output('pipe:', format='f32le', ac=1, ar='16000')
+            .run_async(pipe_stdout=True, pipe_stderr=True)
+        )
+        out, err = process.communicate()
+        audio_np = np.frombuffer(out, np.float32)
+
+        print("🤖 Whisper 正在识别...")
+        result = whisper_model.transcribe(audio_np, language='zh')
+        text = result["text"].strip()
+        print("✅ 识别结果：", text)
+
+        with open(output_path, 'w', encoding='utf-8') as f:
+            json.dump({
+                "input_type": "audio",
+                "file": os.path.basename(audio_path),
+                "text": text
+            }, f, ensure_ascii=False, indent=2)
+        print(f"[💾] 已保存到 {output_path}")
     except Exception as e:
-        print(f"[❌] 语音识别失败：{e}")
-        return ""
+        print(f"[❌] 音频识别失败：{e}")
 
-def extract_text_from_image(image_path: str) -> str:
-    """
-    读取图像文件中的中文或英文文字
-    :param image_path: 图像文件路径
-    :return: 提取出的文字字符串
-    """
+# === 图像处理 ===
+def extract_text_from_image(image_path: str, output_path: str):
+    print(f"\n[🖼] 正在读取图像文件：{image_path}")
+    if not os.path.isfile(image_path):
+        print("❌ 图像文件不存在。")
+        return
+
     try:
-        print(f"[🖼] 正在读取图像：{image_path}")
         result = ocr_reader.readtext(image_path, detail=0)
         text = '\n'.join(result).strip()
-        print(f"[✅] 提取文字：{text}")
-        return text
+        print("✅ 图像识别结果：", text)
+
+        with open(output_path, 'w', encoding='utf-8') as f:
+            json.dump({
+                "input_type": "image",
+                "file": os.path.basename(image_path),
+                "text": text
+            }, f, ensure_ascii=False, indent=2)
+        print(f"[💾] 已保存到 {output_path}")
     except Exception as e:
         print(f"[❌] 图像识别失败：{e}")
-        return ""
+
+# === 主函数 ===
+def main():
+    print("\n=== 多模态转文字工具 ===")
+    mode = input("请输入文件类型（v=音频，i=图像）：").strip().lower()
+
+    if mode == "v":
+        path = input("请输入音频文件路径（支持 .wav/.mp3）：").strip()
+        transcribe_audio_stream(path, "audio_output.json")
+    elif mode == "i":
+        path = input("请输入图像文件路径：").strip()
+        extract_text_from_image(path, "image_output.json")
+    else:
+        print("⚠️ 输入无效，请输入 v 或 i")
+
+if __name__ == "__main__":
+    main()
