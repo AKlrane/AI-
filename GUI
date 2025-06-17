@@ -1,6 +1,7 @@
 import tkinter as tk
-from tkinter import ttk, filedialog, scrolledtext
-
+from tkinter import ttk, filedialog, scrolledtext,messagebox
+from TextToJson import *
+import os
 class WeChatToolkit:
     def __init__(self, root):
         self.root = root
@@ -24,12 +25,20 @@ class WeChatToolkit:
         
         # 构建显示面板内容
         self.setup_display_panel(display_frame)
+        self.chat_flie_path=""
+        self.chat_data=None
+        self.json_output=""
+        self.status_var = tk.StringVar(value="就绪")
+        status_bar = ttk.Frame(root, relief=tk.SUNKEN, padding=(10, 5))
+        status_bar.pack(side=tk.BOTTOM, fill=tk.X)
+        ttk.Label(status_bar, textvariable=self.status_var).pack(side=tk.LEFT)
     
     def setup_control_panel(self, parent):
         # 文件操作区域
         file_frame = ttk.LabelFrame(parent, text="文件操作")
         file_frame.pack(fill=tk.X, padx=5, pady=5)
-        
+        self.file_label = ttk.Label(file_frame, text="未选择文件", wraplength=200)
+        self.file_label.pack(fill=tk.X, pady=5)
         ttk.Button(file_frame, text="导入聊天记录", 
                   command=self.import_chat_history).pack(fill=tk.X, pady=2)
         ttk.Button(file_frame, text="导出JSON", 
@@ -57,7 +66,7 @@ class WeChatToolkit:
         api_frame.pack(fill=tk.X, padx=5, pady=5)
         
         ttk.Label(api_frame, text="API密钥:").pack(anchor=tk.W)
-        ttk.Entry(api_frame).pack(fill=tk.X, pady=2)
+        self.api_key_entry=ttk.Entry(api_frame).pack(fill=tk.X, pady=2)
         
         ttk.Button(api_frame, text="测试连接", 
                   command=self.test_api).pack(fill=tk.X, pady=2)
@@ -70,38 +79,57 @@ class WeChatToolkit:
     
     def setup_display_panel(self, parent):
         # 使用Notebook创建多个标签页
-        notebook = ttk.Notebook(parent)
-        notebook.pack(fill=tk.BOTH, expand=True)
+        self.notebook = ttk.Notebook(parent)
+        self.notebook.pack(fill=tk.BOTH, expand=True)
         
         # 聊天记录预览标签页
-        preview_frame = ttk.Frame(notebook)
-        notebook.add(preview_frame, text="聊天记录预览")
+        preview_frame = ttk.Frame(self.notebook)
+        self.notebook.add(preview_frame, text="聊天记录预览")
         
-        preview_text = scrolledtext.ScrolledText(preview_frame, wrap=tk.WORD)
-        preview_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-        preview_text.insert(tk.END, "聊天记录内容将显示在这里...")
+        self.preview_text = scrolledtext.ScrolledText(preview_frame, wrap=tk.WORD)
+        self.preview_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        self.preview_text.insert(tk.END, "聊天记录内容将显示在这里...")
         
         # JSON预览标签页
-        json_frame = ttk.Frame(notebook)
-        notebook.add(json_frame, text="JSON预览")
+        json_frame = ttk.Frame(self.notebook)
+        self.notebook.add(json_frame, text="JSON预览")
         
-        json_text = scrolledtext.ScrolledText(json_frame, wrap=tk.WORD)
-        json_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-        json_text.insert(tk.END, "转换后的JSON内容将显示在这里...")
+        self.json_text = scrolledtext.ScrolledText(json_frame, wrap=tk.WORD)
+        self.json_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        self.json_text.insert(tk.END, "转换后的JSON内容将显示在这里...")
         
         # API回复标签页
-        api_frame = ttk.Frame(notebook)
-        notebook.add(api_frame, text="API响应")
+        api_frame = ttk.Frame(self.notebook)
+        self.notebook.add(api_frame, text="API响应")
         
-        api_text = scrolledtext.ScrolledText(api_frame, wrap=tk.WORD)
-        api_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-        api_text.insert(tk.END, "API返回的回复将显示在这里...")
+        self.api_text = scrolledtext.ScrolledText(api_frame, wrap=tk.WORD)
+        self.api_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        self.api_text.insert(tk.END, "API返回的回复将显示在这里...")
     
     # 占位功能方法
     def import_chat_history(self):
-        filedialog.askopenfilename(title="选择聊天记录文件")
-        print("导入聊天记录功能被调用")
-    
+        file_path = filedialog.askopenfilename(
+            title="选择聊天记录文件",
+            filetypes=[("文本文件", "*.txt"), ("所有文件", "*.*")]
+        )
+        if file_path:
+            self.chat_file_path = file_path
+            self.file_label.config(text=os.path.basename(file_path))
+            self.status_var.set(f"已选择文件: {os.path.basename(file_path)}")
+            
+            # 尝试预览文件内容
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read(5000)  # 只读取前5000个字符用于预览
+                
+                self.preview_text.config(state=tk.NORMAL)
+                self.preview_text.delete(1.0, tk.END)
+                self.preview_text.insert(tk.END, content)
+                self.preview_text.config(state=tk.DISABLED)
+                convert_wechat_to_json(file_path,"test.json")
+            except Exception as e:
+                messagebox.showerror("读取错误", f"无法读取文件: {str(e)}")
+                self.status_var.set("文件读取失败")
     def export_json(self):
         filedialog.asksaveasfilename(title="保存JSON文件")
         print("导出JSON功能被调用")
