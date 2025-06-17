@@ -66,19 +66,4 @@ def extract_text_from_image(image_path: str, output_path: str):
     except Exception as e:
         print(f"[❌] 图像识别失败：{e}")
 
-# === 主函数 ===
-def main():
-    print("\n=== 多模态转文字工具 ===")
-    mode = input("请输入文件类型（v=音频，i=图像）：").strip().lower()
 
-    if mode == "v":
-        path = input("请输入音频文件路径（支持 .wav/.mp3）：").strip()
-        transcribe_audio_stream(path, "audio_output.json")
-    elif mode == "i":
-        path = input("请输入图像文件路径：").strip()
-        extract_text_from_image(path, "image_output.json")
-    else:
-        print("⚠️ 输入无效，请输入 v 或 i")
-
-if __name__ == "__main__":
-    main()
