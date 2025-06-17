@@ -1,0 +1,91 @@
+import re
+import json
+
+def parse_wechat_history(input_text):
+    """
+    解析微信聊天记录文本，准确提取昵称和时间信息
+    :param input_text: 聊天记录文本
+    :return: 解析后的消息列表
+    """
+    # 匹配格式：昵称（可能包含空格和特殊字符） + 空格 + 时间（HH:MM）
+    message_pattern = re.compile(r'^([\s\S]+?) (\d{1,2}:\d{1,2})$')
+    
+    messages = []
+    current_sender = None
+    current_time = None
+    current_content = []
+    
+    lines = input_text.split('\n')
+    
+    for i, line in enumerate(lines):
+        line = line.strip()
+        if not line:
+            continue
+            
+        # 尝试匹配消息行（昵称 + 时间）
+        match = message_pattern.match(line)
+        if match:
+            # 保存上一条消息
+            if current_time is not None and current_content:
+                messages.append({
+                    "sender": current_sender,
+                    "time": current_time,
+                    "content": "\n".join(current_content)
+                })
+                current_content = []
+            
+            # 提取发送者和时间
+            sender_time_line = match.groups()
+            current_sender = sender_time_line[0].strip()
+            current_time = sender_time_line[1]
+        else:
+            # 普通消息内容行
+            current_content.append(line)
+    
+    # 添加最后一条消息
+    if current_time is not None and current_content:
+        messages.append({
+            "sender": current_sender,
+            "time": current_time,
+            "content": "\n".join(current_content)
+        })
+    
+    return messages
+
+def convert_wechat_to_json(input_file, output_file):
+    """
+    将微信聊天记录转换为JSON格式
+    :param input_file: 输入文件路径
+    :param output_file: 输出文件路径
+    """
+    with open(input_file, 'r', encoding='utf-8') as f:
+        input_text = f.read()
+    
+    messages = parse_wechat_history(input_text)
+    
+    # 组织JSON结构
+    chat_data = {
+        "source": "WeChat",
+        "message_count": len(messages),
+        "participants": list(set(msg["sender"] for msg in messages)),
+        "messages": messages
+    }
+    
+    # 保存为JSON文件
+    with open(output_file, 'w', encoding='utf-8') as f:
+        json.dump(chat_data, f, ensure_ascii=False, indent=2)
+    
+    return chat_data
+
+
+if __name__ == "__main__":
+    
+    input_file = "test.txt"  
+    output_file = "wechat_messages.json" 
+    
+    
+    result = convert_wechat_to_json(input_file, output_file)
+    
+    print(f"成功解析聊天记录: {result['message_count']}条消息")
+    print(f"参与者: {', '.join(result['participants'])}")
+    print(f"JSON文件已保存到: {output_file}")
