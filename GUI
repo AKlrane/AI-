@@ -41,10 +41,10 @@ class WeChatToolkit:
         self.file_label.pack(fill=tk.X, pady=5)
         ttk.Button(file_frame, text="导入聊天记录", 
                   command=self.import_chat_history).pack(fill=tk.X, pady=2)
-        ttk.Button(file_frame, text="导出JSON", 
-                  command=self.export_json).pack(fill=tk.X, pady=2)
-        ttk.Button(file_frame, text="清空数据", 
-                  command=self.clear_data).pack(fill=tk.X, pady=2)
+        ttk.Button(file_frame, text="导入图片", 
+                  command=self.import_pic).pack(fill=tk.X, pady=2)
+        ttk.Button(file_frame, text="导入语音", 
+                  command=self.import_audio).pack(fill=tk.X, pady=2)
         
         # 解析设置区域
         parse_frame = ttk.LabelFrame(parent, text="解析设置")
@@ -74,7 +74,10 @@ class WeChatToolkit:
                   command=self.auto_reply).pack(fill=tk.X, pady=2)
         
         # 退出按钮
-        ttk.Button(parent, text="退出程序", 
+        
+        ttk.Button(parent, text="新的对话", 
+                  command=self.root.quit).pack(side=tk.BOTTOM, fill=tk.X, pady=10)
+        ttk.Button(parent, text="工具箱", 
                   command=self.root.quit).pack(side=tk.BOTTOM, fill=tk.X, pady=10)
     
     def setup_display_panel(self, parent):
@@ -88,15 +91,15 @@ class WeChatToolkit:
         
         self.preview_text = scrolledtext.ScrolledText(preview_frame, wrap=tk.WORD)
         self.preview_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-        self.preview_text.insert(tk.END, "聊天记录内容将显示在这里...")
+        #self.preview_text.insert(tk.END, "聊天记录内容将显示在这里...")
         
         # JSON预览标签页
         json_frame = ttk.Frame(self.notebook)
-        self.notebook.add(json_frame, text="JSON预览")
+        self.notebook.add(json_frame, text="回复预览")
         
         self.json_text = scrolledtext.ScrolledText(json_frame, wrap=tk.WORD)
         self.json_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-        self.json_text.insert(tk.END, "转换后的JSON内容将显示在这里...")
+        #self.json_text.insert(tk.END, "转换后的JSON内容将显示在这里...")
         
         # API回复标签页
         api_frame = ttk.Frame(self.notebook)
@@ -104,7 +107,7 @@ class WeChatToolkit:
         
         self.api_text = scrolledtext.ScrolledText(api_frame, wrap=tk.WORD)
         self.api_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-        self.api_text.insert(tk.END, "API返回的回复将显示在这里...")
+        #self.api_text.insert(tk.END, "API返回的回复将显示在这里...")
     
     # 占位功能方法
     def import_chat_history(self):
@@ -126,19 +129,24 @@ class WeChatToolkit:
                 self.preview_text.delete(1.0, tk.END)
                 self.preview_text.insert(tk.END, content)
                 self.preview_text.config(state=tk.DISABLED)
-                convert_wechat_to_json(file_path,"test.json")
+                #convert_wechat_to_json(file_path,"test.json")
             except Exception as e:
                 messagebox.showerror("读取错误", f"无法读取文件: {str(e)}")
                 self.status_var.set("文件读取失败")
-    def export_json(self):
-        filedialog.asksaveasfilename(title="保存JSON文件")
-        print("导出JSON功能被调用")
+    def import_pic(self):
+        #filedialog.asksaveasfilename(title="保存JSON文件")
+        print("导入图片功能被调用")
     
-    def clear_data(self):
-        print("清空数据功能被调用")
+    def import_audio(self):
+        print("导入语音功能被调用")
     
     def parse_chat(self):
-        print("解析聊天记录功能被调用")
+        #print("解析聊天记录功能被调用")
+        try:
+            convert_wechat_to_json(self.chat_file_path,"test.json")
+            messagebox.showinfo(title="完成", message="已成功解析为JSON文件")
+        except:
+            messagebox.showerror(title="错误", message="请正确导入文件")
     
     def test_api(self):
         print("测试API连接功能被调用")
