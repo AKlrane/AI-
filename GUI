@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, filedialog, scrolledtext,messagebox
 from TextToJson import *
+from MultiModalExtractor import transcribe_audio, extract_image_text
 import os
 class WeChatToolkit:
     def __init__(self, root):
@@ -134,11 +135,51 @@ class WeChatToolkit:
                 messagebox.showerror("读取错误", f"无法读取文件: {str(e)}")
                 self.status_var.set("文件读取失败")
     def import_pic(self):
-        #filedialog.asksaveasfilename(title="保存JSON文件")
-        print("导入图片功能被调用")
-    
+        file_path = filedialog.askopenfilename(
+         title="选择图片文件", 
+         filetypes=[("图片文件", "*.png;*.jpg;*.jpeg")]
+        )
+        if not file_path:
+           return
+        self.file_label.config(text=os.path.basename(file_path))
+        self.status_var.set(f"已选择图片: {os.path.basename(file_path)}")
+
+        text, error = extract_image_text(file_path)
+        if error:
+            messagebox.showerror("图像识别错误", error)
+            return
+
+        result_json = {
+             "input_type": "image",
+             "file": os.path.basename(file_path),
+             "text": text
+        }
+        self.json_text.delete(1.0, tk.END)
+        self.json_text.insert(tk.END, json.dumps(result_json, ensure_ascii=False, indent=2))
+
     def import_audio(self):
-        print("导入语音功能被调用")
+        file_path = filedialog.askopenfilename(
+            title="选择音频文件", 
+            filetypes=[("音频文件", "*.mp3;*.wav")]
+        )
+        if not file_path:
+            return
+        self.file_label.config(text=os.path.basename(file_path))
+        self.status_var.set(f"已选择音频: {os.path.basename(file_path)}")
+
+        text, error = transcribe_audio(file_path)
+        if error:
+            messagebox.showerror("音频识别错误", error)
+            return
+
+        result_json = {
+        "input_type": "audio",
+        "file": os.path.basename(file_path),
+        "text": text
+        }
+        self.json_text.delete(1.0, tk.END)
+        self.json_text.insert(tk.END, json.dumps(result_json, ensure_ascii=False, indent=2))
+
     
     def parse_chat(self):
         #print("解析聊天记录功能被调用")
