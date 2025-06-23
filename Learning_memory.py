@@ -7,12 +7,12 @@ from Data_process import DataManager, DeepSeekProcessor
 class BatchRestoreProcessor:
     def __init__(self):
         self.batch_size = 32  # 可调整批次大小
-        self.restore_file = "restore.json"
+        self.memory_file = "memory.json"
         self._validate_files()
 
     def _validate_files(self):
         """验证必要文件存在"""
-        if not os.path.exists(self.restore_file):
+        if not os.path.exists(self.memory_file):
             raise FileNotFoundError(f"历史记录不存在")
         # 初始化目标文件
         open("core_data.json", 'a').close()
@@ -20,7 +20,7 @@ class BatchRestoreProcessor:
 
     def _load_filtered_messages(self) -> List[Dict]:
         """加载并过滤用户消息"""
-        with open(self.restore_file, "r", encoding="utf-8") as f:
+        with open(self.memory_file, "r", encoding="utf-8") as f:
             data = json.load(f)
         return [msg for msg in data["messages"] 
                 if msg.get("sender") == "我" and msg.get("content")]
