@@ -8,12 +8,13 @@ from camel.agents import ChatAgent
 
 from Data_process import DataManager, DeepSeekProcessor
 
-process = DeepSeekProcessor
+process = DeepSeekProcessor()
+agent = process.agent
 
 def process_conversation(user_input: str):
     """处理单轮对话（简化存储版）"""
     # 获取AI回复
-    response = process.agent.step(user_input)
+    response = agent.step(user_input)
     ai_response = response.msgs[0].content
     print(f"\n助手: {ai_response}")
       
