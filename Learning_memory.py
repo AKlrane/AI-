@@ -3,7 +3,8 @@ import os
 from datetime import datetime
 from typing import List, Dict
 from Data_process import DataManager, DeepSeekProcessor
-
+deepseek=DeepSeekProcessor()
+manager=DataManager()
 class BatchRestoreProcessor:
     def __init__(self):
         self.batch_size = 32  # 可调整批次大小
@@ -22,8 +23,8 @@ class BatchRestoreProcessor:
         """加载并过滤用户消息"""
         with open(self.restore_file, "r", encoding="utf-8") as f:
             data = json.load(f)
-        return [msg for msg in data["messages"] 
-                if msg.get("sender") == "我" and msg.get("content")]
+        return [msg for msg in data["messages"]] 
+                #if msg.get("sender") == "我" and msg.get("content")]
 
     def _batch_generator(self, messages: List[Dict]):
         """生成批量数据块"""
@@ -34,12 +35,13 @@ class BatchRestoreProcessor:
         """处理单个批次"""
         # 合并批次内容
         combined_text = "\n".join([msg["content"] for msg in batch])
-        
+        #print(combined_text)
+        #combined_text=str(combined_text)
         # 提取关键内容
-        core_data = DeepSeekProcessor._extract_key_contents(combined_text)
+        core_data = deepseek._extract_key_contents(text=combined_text)
         
         # 分析语言风格
-        style_data = DeepSeekProcessor._analyze_linguistic_style(combined_text)
+        style_data = deepseek._analyze_linguistic_style(combined_text)
         
         return core_data, style_data
 
@@ -60,8 +62,8 @@ class BatchRestoreProcessor:
                 style_data["batch_size"] = len(batch)
                 
                 # 保存数据
-                DataManager.save_content(core_data)
-                DataManager.save_style(style_data)
+                manager.save_content(core_data)
+                manager.save_style(style_data)
                 
                 print(f"进度: {batch_index}/{total_batches} 批次", end='\r')
             except Exception as e:
@@ -70,6 +72,7 @@ class BatchRestoreProcessor:
         
         print(f"\n处理完成！核心数据文件：core_data.json，风格数据文件：linguistic_style.json")
 
-if __name__ == "__main__":
+def main_memory():
     processor = BatchRestoreProcessor()
     processor.execute()
+#main_memory()
