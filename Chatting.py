@@ -1,3 +1,4 @@
+
 import os
 import json
 from datetime import datetime
@@ -182,27 +183,27 @@ class DeepSeekProcessor:
             # 写入错误日志
             with open("error.log", "a") as f:
                 f.write(f"{datetime.now()} - {str(e)}\n")
+        return ai_response
 
 # ====================== 主程序 ======================
-def main():
+def main(user_input):
     processor = DeepSeekProcessor()
     print("输入对话内容开始交流 (输入 'exit' 退出)")
     
-    while True:
-        try:
-            user_input = input("\n用户: ").strip()
+    
+    try:
+            user_input = user_input.strip()
             if not user_input:
-                continue
+                pass
             if user_input.lower() == 'exit':
                 print("对话已保存，退出系统")
-                break
-            processor.process_conversation(user_input)
-        except KeyboardInterrupt:
+                pass
+            return processor.process_conversation(user_input)
+    except KeyboardInterrupt:
             print("\n对话已自动保存")
-            break
-        except Exception as e:
+            pass
+    except Exception as e:
             print(f"系统错误: {str(e)}")
-            continue
+            pass
 
-if __name__ == "__main__":
-    main()
+
