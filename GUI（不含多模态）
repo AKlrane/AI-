@@ -79,7 +79,7 @@ class WeChatToolkit:
         # 退出按钮
         
         ttk.Button(parent, text="新的对话", 
-                  command=self.root.quit).pack(side=tk.BOTTOM, fill=tk.X, pady=10)
+                  command=self.new_conv).pack(side=tk.BOTTOM, fill=tk.X, pady=10)
         ttk.Button(parent, text="工具箱", 
                   command=self.root.quit).pack(side=tk.BOTTOM, fill=tk.X, pady=10)
     
@@ -131,7 +131,7 @@ class WeChatToolkit:
                 self.preview_text.config(state=tk.NORMAL)
                 self.preview_text.delete(1.0, tk.END)
                 self.preview_text.insert(tk.END, content)
-                self.preview_text.config(state=tk.DISABLED)
+                #self.preview_text.config(state=tk.DISABLED)
                 #convert_wechat_to_json(file_path,"test.json")
             except Exception as e:
                 messagebox.showerror("读取错误", f"无法读取文件: {str(e)}")
@@ -164,6 +164,22 @@ class WeChatToolkit:
         output=str(output)
         self.api_text.insert(tk.END,output)
         print("自动回复功能被调用")
+    def new_conv(self):
+        self.input_text.delete(1.0,tk.END)
+        self.preview_text.delete(1.0,tk.END)
+        self.api_text.delete(1.0,tk.END)
+        cm=open('chatting_memory.json','w')
+        cm.write('[]')
+        cm.close()
+        cd=open('core_data.json','w')
+        cd.write('[]')
+        cd.close()
+        ls=open('linguistic_style.json','w')
+        ls.write('[]')
+        ls.close()
+        m=open('memory.json','w')
+        m.write('[]')
+        m.close()
 
 # 创建主窗口并运行程序
 if __name__ == "__main__":
