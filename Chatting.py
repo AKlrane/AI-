@@ -1,4 +1,3 @@
-
 import os
 import json
 from datetime import datetime
@@ -92,12 +91,10 @@ class DeepSeekProcessor:
 
         要求：
         1. entities: 识别所有专业名词（人物/地点/机构/技术术语），用中文列出
-        2. keywords: 提取5个最具代表性的关键词，用中文
-        3. summary: 生成100字内的中文摘要
-        4. 输出格式：
+        2. summary: 生成100字内的中文摘要
+        3. 输出格式：
         {{
             "entities": [],
-            "keywords": [],
             "summary": ""
         }}"""
 
@@ -115,18 +112,14 @@ class DeepSeekProcessor:
             return {
                 "timestamp": datetime.now().isoformat(),
                 "entities": result.get("entities", []),
-                "keywords": result.get("keywords", []),
                 "summary": result.get("summary", ""),
-                "raw_text": text
             }
         except Exception as e:
             print(f"关键信息提取失败: {str(e)}")
             return {
                 "timestamp": datetime.now().isoformat(),
                 "entities": [],
-                "keywords": [],
                 "summary": "信息提取失败",
-                "raw_text": text
             }
     
     def process_conversation(self, user_input: str):
@@ -154,7 +147,7 @@ class DeepSeekProcessor:
         #format_data_to_str(data_d, "Dataset D")if read_talk
     ])
         system_content = f"""
-        你是一个数据分析助手，可以访问以下数据集：{data_context}请严格根据这些数据回答用户问题。
+        你将扮演以下数据集描述的人：{data_context}请根据这些数据，符合"Dataset B"中的语言风格来回答用户问题，注意只给出语言。
         """
         user_msg = BaseMessage.make_user_message(
             role_name="User",
@@ -183,27 +176,27 @@ class DeepSeekProcessor:
             # 写入错误日志
             with open("error.log", "a") as f:
                 f.write(f"{datetime.now()} - {str(e)}\n")
-        return ai_response
 
 # ====================== 主程序 ======================
-def main(user_input):
+def main():
     processor = DeepSeekProcessor()
     print("输入对话内容开始交流 (输入 'exit' 退出)")
     
-    
-    try:
-            user_input = user_input.strip()
+    while True:
+        try:
+            user_input = input("\n用户: ").strip()
             if not user_input:
-                pass
+                continue
             if user_input.lower() == 'exit':
                 print("对话已保存，退出系统")
-                pass
-            return processor.process_conversation(user_input)
-    except KeyboardInterrupt:
+                break
+            processor.process_conversation(user_input)
+        except KeyboardInterrupt:
             print("\n对话已自动保存")
-            pass
-    except Exception as e:
+            break
+        except Exception as e:
             print(f"系统错误: {str(e)}")
-            pass
+            continue
 
-
+if __name__ == "__main__":
+    main()
